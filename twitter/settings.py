@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     # project apps
     'accounts',
-    'tweets'
+    'tweets',
+    'friendships'
 ]
 
 REST_FRAMEWORK = {
