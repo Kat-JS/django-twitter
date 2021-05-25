@@ -18,9 +18,11 @@ class CommentViewSet(viewsets.ModelViewSet):
     # query set userd to self.get_object() api/comment/1
     queryset = Comment.objects.all()
 
+    # used by django_filters
+    filterset_fields = ('tweet_id',)
 
     # POST /api/comments/ create
-    # Get /api/comments/  list  detail = false
+    # Get /api/comments/?tweet_id = 1  list  detail = false
     # Get /api/comments/1/  retrieve detail = true
     # Delete /api/comments/1/  destroy
     # patch /api/comments/1/ partial update
@@ -34,6 +36,26 @@ class CommentViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'destroy']:
             return [IsAuthenticated(), IsObjectOwner() ]
         return [AllowAny()]
+
+    def list(self, request, *args, **kwargs):
+        if 'tweet_id' not in request.query_params:
+            return Response(
+                {
+                    'message': 'missing tweet_id in request',
+                    'success': False,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # will return queryset, get_querySet() could be override
+        queryset = self.get_queryset()
+
+        # filter by filterset_fields
+        comments = self.filter_queryset(queryset).order_by('created_at')
+        serializer = CommentSerializer(comments, many=True)
+        return Response(
+            {'comments': serializer.data},
+            status=status.HTTP_200_OK,
+        )
 
     def create(self, request, *args, **kwargs):
         data = {
